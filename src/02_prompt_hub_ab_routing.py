@@ -14,6 +14,11 @@ import sys
 import hashlib
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 import config  # ⚠️ phải import trước LangChain
@@ -186,22 +191,29 @@ def main():
         version_tag = "v1" if version_key == PROMPT_V1_NAME else "v2"
         prompt      = prompts[version_key]
 
-        try:
-            result = ask_ab(retriever, llm, prompt, question, version_tag)
-            log_entry = f"[{i:02d}] [{request_id}] [prompt-{version_tag}] Q: {question[:50]}... -> A: {str(result['answer'])[:60]}..."
-            print(log_entry)
-            log_lines.append(log_entry)
-        except Exception as e:
-            log_entry = f"[{i:02d}] [{request_id}] [prompt-{version_tag}] ❌ Lỗi: {e}"
-            print(log_entry)
-            log_lines.append(log_entry)
+        for attempt in range(4):
+            try:
+                result = ask_ab(retriever, llm, prompt, question, version_tag)
+                log_entry = f"[{i:02d}] [{request_id}] [prompt-{version_tag}] Q: {question[:50]}... -> A: {str(result['answer'])[:60]}..."
+                print(log_entry)
+                log_lines.append(log_entry)
+                break
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"  ⚠️ Rate limit, tạm nghỉ 15s (lần thử {attempt + 1}/4)...")
+                    time.sleep(15)
+                else:
+                    log_entry = f"[{i:02d}] [{request_id}] [prompt-{version_tag}] ❌ Lỗi: {e}"
+                    print(log_entry)
+                    log_lines.append(log_entry)
+                    break
 
         if version_tag == "v1":
             v1_count += 1
         else:
             v2_count += 1
 
-        time.sleep(1.2)
+        time.sleep(2.0)
 
     summary_log = f"\n📊 Thống kê Routing: V1={v1_count} câu | V2={v2_count} câu | Tổng={len(SAMPLE_QUESTIONS)}"
     print(summary_log)
