@@ -61,9 +61,30 @@ def build_vectorstore(chunks: list, embeddings):
     Returns:
         FAISS vectorstore đã được index và sẵn sàng dùng để retrieve
     """
+    import time
     from langchain_community.vectorstores import FAISS
 
     print(f"🔨 Đang tạo FAISS index từ {len(chunks)} chunks ...")
-    vectorstore = FAISS.from_texts(chunks, embeddings)
+    
+    # Chia nhỏ theo batch và nhúng có kiểm soát tốc độ để tránh quota rate limit (429)
+    batch_size = 20
+    all_embeddings = []
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        for attempt in range(5):
+            try:
+                emb_batch = embeddings.embed_documents(batch)
+                all_embeddings.extend(emb_batch)
+                break
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"   ⏳ Đạt giới hạn tốc độ API, tạm dừng 12s (lần thử {attempt + 1}/5)...")
+                    time.sleep(12)
+                else:
+                    raise e
+        time.sleep(0.5)
+
+    text_embeddings = list(zip(chunks, all_embeddings))
+    vectorstore = FAISS.from_embeddings(text_embeddings, embeddings)
     print("✅ FAISS vectorstore đã sẵn sàng.")
     return vectorstore
