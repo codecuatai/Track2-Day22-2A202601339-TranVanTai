@@ -1,4 +1,15 @@
-# Chào mừng các bạn đến với Day 22: LangSmith + Prompt Versioning
+# Day 22: LangSmith + Prompt Versioning — Báo Cáo Nộp Bài
+
+- **Học viên:** Trần Văn Tài
+- **GitHub Repository:** [https://github.com/codecuatai/Track2-Day22-2A202601339-TranVanTai](https://github.com/codecuatai/Track2-Day22-2A202601339-TranVanTai)
+- **LangSmith Project:** `day22-lab` ([Truy cập LangSmith Tracing](https://smith.langchain.com/o/d0a2f0a8-9466-42fa-a441-557dc961ebfb/projects/p/baabd1a3-3e5d-4932-bc47-1a7c9c75f019))
+- **LangSmith Prompt Hub:**
+  - `tran-van-tai-rag-prompt-v1`
+  - `tran-van-tai-rag-prompt-v2`
+- **Kết quả RAGAS:** Faithfulness = **0.9542** (Đạt chuẩn $\ge 0.80$)
+- **Thư mục Minh chứng:** [`evidence/`](evidence/) (Đầy đủ 100% 7 file bắt buộc + phân tích chi tiết)
+
+---
 
 ## Tổng quan
 
